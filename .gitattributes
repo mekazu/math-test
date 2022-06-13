@@ -1,0 +1,5 @@
+# Treat all files in this repository (because they don't have extensions) as unix text files.
+bin/*          text eol=lf
+etc/*          text eol=lf
+.gitattributes text
+.gitignore     text
