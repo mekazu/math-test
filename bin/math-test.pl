@@ -9,6 +9,7 @@ use Data::Dump qw(dump);
 my $correct_answer_limit = shift @ARGV || 5;
 my $max_int = shift @ARGV || 12;
 my $operators = shift @ARGV || '';
+my $batch_mode = $ENV{'BATCH'};
 $operators =~ s/[^+*\/-]//g;
 $operators ||= '+-*';
 my $ops = [split "", $operators];
@@ -16,25 +17,31 @@ say "Welcome to math-test!";
 say "Settings: correct answer limit: $correct_answer_limit, Highest question number: $max_int, operators: " . dump $ops;
 say "Press ctrl+d to exit";
 my $question;
+my @summary;
 my $answer = raise_question();
 my %score;
-while (my $line = <>) {
-    chomp $line;
-    if ($line !~ /^[\d-]+$/) {
-        warn "Invalid: $line";
+while (my $input = <>) {
+    chomp $input;
+    if ($input !~ /^[\d-]+$/) {
+        warn "Invalid: $input";
         print $question;
         next;
     }
-    if (int($line) eq $answer) {
-        say "Correct";
+    my $correct = int($input) eq $answer;
+    my $result;
+    if ($correct) {
+        $result = "Correct";
         $score{Correct}++;
-        last unless --$correct_answer_limit;
     } else {
-        say "Wrong, the answer is: $answer";
+        $result = "Wrong, the answer is: $answer";
         $score{Wrong}++;
     }
+    push @summary, "$question$input ... $result";
+    say $result unless $batch_mode;
+    last if $correct and not --$correct_answer_limit;
     $answer = raise_question();
 }
+say "\nResults:\n" . join "\n", @summary if $batch_mode;
 say "\nScore: " . dump \%score;
 say "Press up and enter to go again";
 
@@ -52,7 +59,8 @@ sub raise_question {
     if ($op eq '/') {
         my $numerator = $a * $b;
         my $answer = $b;
-        $question = "$a x ? = $numerator?\n$numerator / $a = ";
+        say "$a x ? = $numerator?";
+        $question = "$numerator / $a = ";
         print $question;
         return $answer;
     }
